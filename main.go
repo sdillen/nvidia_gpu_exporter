@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mindprince/gonvml"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,6 +18,9 @@ const (
 )
 
 var (
+	// Version will be provided during build context
+	Version string
+
 	addr = flag.String("web.listen-address", ":9445", "Address to listen on for web interface and telemetry.")
 
 	labels = []string{"minor_number", "uuid", "name"}
@@ -196,6 +200,8 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 
 func main() {
 	flag.Parse()
+
+	log.Infof("Version: %s", Version)
 
 	if err := gonvml.Initialize(); err != nil {
 		log.Fatalf("Couldn't initialize gonvml: %v. Make sure NVML is in the shared library search path.", err)
