@@ -1,16 +1,21 @@
-PKG=github.com/mindprince/nvidia_gpu_prometheus_exporter
-REGISTRY=mindprince
-IMAGE=nvidia_gpu_prometheus_exporter
-TAG=0.1
+# Go parameters
+GOCMD := go
+GOFMT := $(GOCMD) fmt
+GOMOD := $(GOCMD) mod
+GOBUILD := $(GOCMD) build
 
-.PHONY: build
-build:
-	docker run -v $(shell pwd):/go/src/$(PKG) --workdir=/go/src/$(PKG) golang:1.10 go build
+# App parameters
+APP_NAME := nvidia_gpu_prometheus_exporter
+APP_VERSION := $(shell git describe --always --tag)
 
-.PHONY: container
-container:
-	docker build --pull -t ${REGISTRY}/${IMAGE}:${TAG} .
+BUILD_OPTION := -ldflags="\
+	-X 'main.Version=$(APP_VERSION)' -s -w"
 
-.PHONY: push
-push:
-	docker push ${REGISTRY}/${IMAGE}:${TAG}
+fmt:
+		$(GOFMT) ./...
+
+vendor:
+		$(GOMOD) vendor
+
+docker_build: fmt vendor
+		CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GOBUILD) $(BUILD_OPTION) -o /$(APP_NAME) -v ./main.go
